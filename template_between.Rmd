@@ -1,0 +1,73 @@
+---
+title: "Macrovariable Forecast Comparisons"
+subtitle: "`r glue::glue('{params$base_run} ({params$base_scen}) vs {params$comp_run} ({params$comp_scen})')`" 
+author: "FMMD"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  ioslides_presentation:
+    logo: "logo.png"
+    self_contained: FALSE
+params:
+  base_run: "CCAR 2018"
+  comp_run: "CCAR 2019"
+  base_scen: "S3"
+  comp_scen: "S3"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,  
+                      warning=FALSE, 
+                      message=FALSE)
+
+
+options(knitr.kable.NA = '')
+options(kableExtra.html.bsTable = T)
+
+# source libraries, functions, and import data
+source(here::here("shared", "code", "libs.R"))
+source(here::here("shared", "code", "functions.R"))
+source(here::here("shared", "code", "import_mac_data.R"))
+
+# get base scenario display name for filtering
+base_scen <- 
+  scenario_mapping_table %>%
+  dplyr::filter(stringr::str_to_upper(params$base_run) == run_display &
+                  stringr::str_to_lower(params$base_scen) == scenario_name) %>%
+  dplyr::select(scenario_display) %>%
+  dplyr::pull()
+
+# get comp scenario display name for filtering
+comp_scen <- 
+  scenario_mapping_table %>%
+  dplyr::filter(stringr::str_to_upper(params$comp_run) == run_display &
+                  stringr::str_to_lower(params$comp_scen) == scenario_name) %>%
+  dplyr::select(scenario_display) %>%
+  dplyr::pull()
+
+macvar_list <- unique(macrovar_qtr_long$variable)
+
+```
+
+```{r plot-all-vars, echo = FALSE, results = "asis"}
+
+purrr::walk(macvar_list,
+            function(x){
+              
+              cat("\n\n##", 
+                  stringr::str_to_upper(gsub("_", " ", x)),
+                  "{data-background='pptx_background.png'}", "\n\n")
+              print(graph_macvar_comparisons(base_run = params$base_run,
+                                             base_scenarios = base_scen,
+                                             comp_run = params$comp_run,
+                                             comp_scenarios = comp_scen,
+                                             mac_var = x,
+                                             subtitle_hide = TRUE)
+              )
+              
+            }
+            
+)
+
+```
